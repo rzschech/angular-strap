@@ -31,7 +31,6 @@ angular.module('mgcrea.ngStrap.dropdown', ['mgcrea.ngStrap.tooltip'])
         /* var scope = */$dropdown.$scope = options.scope && options.scope.$new() || $rootScope.$new();
 
         $dropdown = $tooltip(element, options);
-        var parentEl = element.parent();
 
         // Protected methods
 
@@ -67,7 +66,8 @@ angular.module('mgcrea.ngStrap.dropdown', ['mgcrea.ngStrap.tooltip'])
             if (options.keyboard && $dropdown.$element) $dropdown.$element.on('keydown', $dropdown.$onKeyDown);
             bodyEl.on('click', onBodyClick);
           }, 0, false);
-          if (parentEl.hasClass('dropdown')) parentEl.addClass('open');
+          var target = getTarget();
+          if (target.hasClass('dropdown')) target.addClass('open');
         };
 
         var hide = $dropdown.hide;
@@ -75,7 +75,8 @@ angular.module('mgcrea.ngStrap.dropdown', ['mgcrea.ngStrap.tooltip'])
           if (!$dropdown.$isShown) return;
           if (options.keyboard && $dropdown.$element) $dropdown.$element.off('keydown', $dropdown.$onKeyDown);
           bodyEl.off('click', onBodyClick);
-          if (parentEl.hasClass('dropdown')) parentEl.removeClass('open');
+          var target = getTarget();
+          if (target.hasClass('dropdown')) target.removeClass('open');
           hide();
         };
 
@@ -90,6 +91,10 @@ angular.module('mgcrea.ngStrap.dropdown', ['mgcrea.ngStrap.tooltip'])
         function onBodyClick (evt) {
           if (evt.target === element[0]) return;
           return evt.target !== element[0] && $dropdown.hide();
+        }
+
+        function getTarget() {
+          return options.target || element.parent();
         }
 
         return $dropdown;
@@ -127,7 +132,7 @@ angular.module('mgcrea.ngStrap.dropdown', ['mgcrea.ngStrap.tooltip'])
 
           // Directive options
           var options = {scope: scope};
-          angular.forEach(['template', 'templateUrl', 'controller', 'controllerAs', 'placement', 'container', 'delay', 'trigger', 'keyboard', 'html', 'animation', 'id', 'autoClose'], function (key) {
+          angular.forEach(['template', 'templateUrl', 'controller', 'controllerAs', 'placement', 'container', 'delay', 'target', 'trigger', 'keyboard', 'html', 'animation', 'id', 'autoClose'], function (key) {
             if (angular.isDefined(tAttrs[key])) options[key] = tAttrs[key];
           });
 
