@@ -279,7 +279,9 @@ angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.helpers.dimensions'])
         $tooltip.hide = function(blur) {
 
           if(!$tooltip.$isShown) return;
-          scope.$emit(options.prefixEvent + '.hide.before', $tooltip);
+          if(scope.$emit(options.prefixEvent + '.hide.before', $tooltip).defaultPrevented) {
+            return;
+          }
 
           // store blur value for leaveAnimateCallback to use
           _blur = blur;

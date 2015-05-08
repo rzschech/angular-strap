@@ -157,13 +157,16 @@ angular.module('mgcrea.ngStrap.typeahead', ['mgcrea.ngStrap.tooltip', 'mgcrea.ng
 
         var hide = $typeahead.hide;
         $typeahead.hide = function() {
-          $typeahead.$element && $typeahead.$element.off('mousedown', $typeahead.$onMouseDown);
+          var typeaheadElement = $typeahead.$element;
+          if(!$typeahead.$isShown) return;
+          hide();
+          if(!$typeahead.$isShown) return; // support preventing hide
+          typeaheadElement && typeaheadElement.off('mousedown', $typeahead.$onMouseDown);
           if(options.keyboard) {
             element && element.off('keydown', $typeahead.$onKeyDown);
           }
           if(!options.autoSelect)
             $typeahead.activate(-1);
-          hide();
         };
 
         return $typeahead;
