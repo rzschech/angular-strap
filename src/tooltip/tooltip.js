@@ -44,7 +44,16 @@ angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.core', 'mgcrea.ngStrap
 
         // Common vars
         var options = $tooltip.$options = angular.extend({}, defaults, config);
-        var promise = $tooltip.$promise = $bsCompiler.compile(options);
+        if (options.inlineTemplate) {
+          var deferred = $q.defer();
+          deferred.resolve();
+          $tooltip.$promise = deferred.promise;
+        }
+        else {
+          $tooltip.$promise = $bsCompiler.compile(options);
+        }
+        var promise = $tooltip.$promise;
+
         var scope = $tooltip.$scope = options.scope && options.scope.$new() || $rootScope.$new();
 
         var nodeName = element[0].nodeName.toLowerCase();
@@ -133,6 +142,11 @@ angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.core', 'mgcrea.ngStrap
             options.target = angular.isElement(options.target) ? options.target : findElement(options.target);
           }
 
+          // Options: inlineTemplate
+          if (options.inlineTemplate) {
+            options.inlineTemplate = angular.isElement(options.inlineTemplate) ? options.inlineTemplate : findElement(options.inlineTemplate, options.target && options.target[0]);
+          }
+
           // Options: show
           if (options.show) {
             scope.$$postDigest(function () {
@@ -182,28 +196,33 @@ angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.core', 'mgcrea.ngStrap
           }
           var parent;
           var after;
-          if (options.container) {
-            parent = tipContainer;
-            if (tipContainer[0].lastChild) {
-              after = angular.element(tipContainer[0].lastChild);
-            } else {
-              after = null;
-            }
-          } else {
-            parent = null;
-            after = element;
+          if (options.inlineTemplate) {
+            tipElement = $tooltip.$element = options.inlineTemplate;
           }
+          else {
+            if (options.container) {
+              parent = tipContainer;
+              if (tipContainer[0].lastChild) {
+                after = angular.element(tipContainer[0].lastChild);
+              } else {
+                after = null;
+              }
+            } else {
+              parent = null;
+              after = element;
+            }
 
 
-          // Hide any existing tipElement
-          if (tipElement) destroyTipElement();
-          // Fetch a cloned element linked from template
-          tipScope = $tooltip.$scope.$new();
-          tipElement = $tooltip.$element = compileData.link(tipScope, function (clonedElement, scope) {});
+            // Hide any existing tipElement
+            if (tipElement) destroyTipElement();
+            // Fetch a cloned element linked from template
+            tipScope = $tooltip.$scope.$new();
+            tipElement = $tooltip.$element = compileData.link(tipScope, function (clonedElement, scope) {});
 
-          // Set the initial positioning.  Make the tooltip invisible
-          // so IE doesn't try to focus on it off screen.
-          tipElement.css({top: '-9999px', left: '-9999px', right: 'auto', display: 'block', visibility: 'hidden'});
+            // Set the initial positioning.  Make the tooltip invisible
+            // so IE doesn't try to focus on it off screen.
+            tipElement.css({top: '-9999px', left: '-9999px', right: 'auto', display: 'block', visibility: 'hidden'});
+          }
 
           // Options: animation
           if (options.animation) tipElement.addClass(options.animation);
@@ -212,13 +231,15 @@ angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.core', 'mgcrea.ngStrap
           // Options: custom classes
           if (options.customClass) tipElement.addClass(options.customClass);
 
-          // Append the element, without any animations.  If we append
-          // using $animate.enter, some of the animations cause the placement
-          // to be off due to the transforms.
-          if (after) {
-            after.after(tipElement);
-          } else {
-            parent.prepend(tipElement);
+          if (!options.inlineTemplate) {
+            // Append the element, without any animations.  If we append
+            // using $animate.enter, some of the animations cause the placement
+            // to be off due to the transforms.
+            if (after) {
+              after.after(tipElement);
+            } else {
+              parent.prepend(tipElement);
+            }
           }
 
           $tooltip.$isShown = scope.$isShown = true;
@@ -227,13 +248,18 @@ angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.core', 'mgcrea.ngStrap
           // Now, apply placement
           $tooltip.$applyPlacement();
 
-          // Once placed, animate it.
-          // Support v1.2+ $animate
-          // https://github.com/angular/angular.js/issues/11713
-          if (angular.version.minor <= 2) {
-            $animate.enter(tipElement, parent, after, enterAnimateCallback);
-          } else {
-            $animate.enter(tipElement, parent, after).then(enterAnimateCallback);
+          if (options.inlineTemplate) {
+            enterAnimateCallback();
+          }
+          else {
+            // Once placed, animate it.
+            // Support v1.2+ $animate
+            // https://github.com/angular/angular.js/issues/11713
+            if (angular.version.minor <= 2) {
+              $animate.enter(tipElement, parent, after, enterAnimateCallback);
+            } else {
+              $animate.enter(tipElement, parent, after).then(enterAnimateCallback);
+            }
           }
           safeDigest(scope);
 
@@ -295,12 +321,17 @@ angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.core', 'mgcrea.ngStrap
           // in leaveAnimateCallback
           _tipToHide = tipElement;
 
-          // Support v1.2+ $animate
-          // https://github.com/angular/angular.js/issues/11713
-          if (angular.version.minor <= 2) {
-            $animate.leave(tipElement, leaveAnimateCallback);
-          } else {
-            $animate.leave(tipElement).then(leaveAnimateCallback);
+          if (options.inlineTemplate) {
+            leaveAnimateCallback();
+          }
+          else {
+            // Support v1.2+ $animate
+            // https://github.com/angular/angular.js/issues/11713
+            if (angular.version.minor <= 2) {
+              $animate.leave(tipElement, leaveAnimateCallback);
+            } else {
+              $animate.leave(tipElement).then(leaveAnimateCallback);
+            }
           }
 
           $tooltip.$isShown = scope.$isShown = false;
@@ -328,6 +359,10 @@ angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.core', 'mgcrea.ngStrap
             // Allow to blur the input when hidden, like when pressing enter key
             if (_blur && options.trigger === 'focus') {
               return element[0].blur();
+            }
+
+            if (options.inlineTemplate) {
+              tipElement.css({display: '', visibility: ''});
             }
 
             // clean up child scopes
@@ -773,7 +808,9 @@ angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.core', 'mgcrea.ngStrap
           }
 
           if (tipElement) {
-            tipElement.remove();
+            if (!options.inlineTemplate) {
+              tipElement.remove();
+            }
             tipElement = $tooltip.$element = null;
           }
         }
