@@ -264,12 +264,14 @@ angular.module('mgcrea.ngStrap.datepicker', [
 
         var _hide = $datepicker.hide;
         $datepicker.hide = function (blur) {
+          var datepickerElement = $datepicker.$element;
           if (!$datepicker.$isShown) return;
-          $datepicker.$element.off(isTouch ? 'touchstart' : 'mousedown', $datepicker.$onMouseDown);
+          _hide(blur);
+          if (!$datepicker.$isShown) return; // support preventing hide
+          datepickerElement.off(isTouch ? 'touchstart' : 'mousedown', $datepicker.$onMouseDown);
           if (options.keyboard) {
             element.off('keydown', $datepicker.$onKeyDown);
           }
-          _hide(blur);
         };
 
         return $datepicker;

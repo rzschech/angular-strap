@@ -405,12 +405,14 @@ angular.module('mgcrea.ngStrap.timepicker', ['mgcrea.ngStrap.helpers.dateParser'
 
         var _hide = $timepicker.hide;
         $timepicker.hide = function (blur) {
+          var timepickerElement = $timepicker.$element;
           if (!$timepicker.$isShown) return;
-          if ($timepicker.$element) $timepicker.$element.off(isTouch ? 'touchstart' : 'mousedown', $timepicker.$onMouseDown);
-          if (options.keyboard) {
-            if (element) element.off('keydown', $timepicker.$onKeyDown);
-          }
           _hide(blur);
+          if (!$timepicker.$isShown) return; // support preventing hide
+          if (timepickerElement) timepickerElement.off(isTouch ? 'touchstart' : 'mousedown', $timepicker.$onMouseDown);
+          if (options.keyboard) {
+            element && element.off('keydown', $timepicker.$onKeyDown);
+          }
         };
 
         return $timepicker;

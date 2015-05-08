@@ -273,14 +273,17 @@ angular.module('mgcrea.ngStrap.select', ['mgcrea.ngStrap.tooltip', 'mgcrea.ngStr
 
         var _hide = $select.hide;
         $select.hide = function () {
+          var selectElement = $select.$element;
+          if(!$select.$isShown) return;
+          hide();
+          if($select.$isShown) return; // support preventing hide
           if (!options.multiple && angular.isUndefined(controller.$modelValue)) {
             scope.$activeIndex = -1;
           }
-          $select.$element.off(isTouch ? 'touchstart' : 'mousedown', $select.$onMouseDown);
+          selectElement.off(isTouch ? 'touchstart' : 'mousedown', $select.$onMouseDown);
           if (options.keyboard) {
             element.off('keydown', $select.$onKeyDown);
           }
-          _hide(true);
         };
 
         return $select;
