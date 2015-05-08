@@ -30,6 +30,13 @@ angular.module('mgcrea.ngStrap.dropdown', ['mgcrea.ngStrap.tooltip'])
         var options = angular.extend({}, defaults, config);
         var scope = $dropdown.$scope = options.scope && options.scope.$new() || $rootScope.$new();
 
+        if (options.inlineTemplate === true) {
+          options.inlineTemplate = '.dropdown-menu';
+        }
+        if (options.inlineTemplate && !options.target) {
+          options.target = element.parent();
+        }
+
         $dropdown = $tooltip(element, options);
 
         // Protected methods
@@ -118,7 +125,7 @@ angular.module('mgcrea.ngStrap.dropdown', ['mgcrea.ngStrap.tooltip'])
 
         // Directive options
         var options = {scope: scope};
-        angular.forEach(['placement', 'container', 'delay', 'target', 'trigger', 'keyboard', 'html', 'animation', 'template', 'id'], function(key) {
+        angular.forEach(['placement', 'container', 'delay', 'target', 'trigger', 'keyboard', 'html', 'animation', 'template', 'id', 'inlineTemplate'], function(key) {
           if(angular.isDefined(attr[key])) options[key] = attr[key];
         });
 
@@ -129,10 +136,15 @@ angular.module('mgcrea.ngStrap.dropdown', ['mgcrea.ngStrap.tooltip'])
             options[key] = false;
         });
 
-        // Support scope as an object
-        attr.bsDropdown && scope.$watch(attr.bsDropdown, function(newValue, oldValue) {
-          scope.content = newValue;
-        }, true);
+        if (attr.bsDropdown) {
+          // Support scope as an object
+          scope.$watch(attr.bsDropdown, function (newValue, oldValue) {
+            scope.content = newValue;
+          }, true);
+        } else {
+          // Support for inline templates
+          options.inlineTemplate = options.inlineTemplate || true;
+        }
 
         // Visibility binding support
         attr.bsShow && scope.$watch(attr.bsShow, function(newValue, oldValue) {

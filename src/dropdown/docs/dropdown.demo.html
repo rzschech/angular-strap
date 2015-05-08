@@ -26,6 +26,19 @@
       <small>(using an object)</small>
     </button>
 
+    <div class="dropdown" style="margin-top: 10px">
+      <button type="button" class="btn btn-lg btn-primary dropdown-trigger" data-animation="am-flip-x" bs-dropdown aria-haspopup="true" aria-expanded="false">Click to toggle dropdown
+        <br />
+        <small>(using an inline template)</small>
+      </button>
+      <ul class="dropdown-menu" role="menu">
+        <li><a role="menuitem" href="#anotherAction" target=""><i class="fa fa-download"></i> Another action</a></li>
+        <li><a role="menuitem"><i class="fa fa-globe"></i> Display an alert</a></li>
+        <li><a role="menuitem" href="/auth/facebook" target="_self"><i class="fa fa-external-link"></i> External link</a></li>
+        <li class="divider"></li>
+        <li><a role="menuitem" href="#separatedLink" target=""> Separated link</a></li>
+      </ul>
+    </div>
   </div>
 
   <h2 id="dropdowns-usage">Usage</h2>
@@ -123,6 +136,14 @@
           <td>false</td>
           <td>
             <p>If provided, overrides the default template, can be either a remote URL or a cached template id.</p>
+          </td>
+        </tr>
+        <tr>
+          <td>inlineTemplate</td>
+          <td>string | DOMElement | true</td>
+          <td>false</td>
+          <td>
+            <p>The dropdown inline template element. If <code>true</code> uses the default '.dropdown-menu' selector.</p>
           </td>
         </tr>
       </tbody>
