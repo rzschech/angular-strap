@@ -186,6 +186,9 @@ angular.module('mgcrea.ngStrap.modal', ['mgcrea.ngStrap.core', 'mgcrea.ngStrap.h
             }
             modalElement.addClass(options.animation);
           }
+          else {
+            backdropElement.addClass('in');
+          }
 
           if (options.backdrop) {
             $animate.enter(backdropElement, bodyElement, null);
