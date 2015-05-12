@@ -403,9 +403,28 @@ angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.core', 'mgcrea.ngStrap
             tipElement.removeClass(originalPlacement).addClass(placement);
           }
 
-          // Get the tooltip's top and left coordinates to center it with this directive.
-          var tipPosition = getCalculatedOffset(placement, elementPosition, tipWidth, tipHeight);
-          applyPlacement(tipPosition, placement);
+          if (options.target && (options.target.hasClass('dropdown') || options.target.hasClass('dropup'))) {
+            if (placement.indexOf('top') >= 0) {
+              options.target.removeClass('dropdown').addClass('dropup');
+            }
+            else {
+              options.target.removeClass('dropup').addClass('dropdown');
+            }
+
+            if (tipElement.hasClass('dropdown-menu')) {
+              if (placement.indexOf('left') >= 0) {
+                tipElement.removeClass('dropdown-menu-right');
+              }
+              else {
+                tipElement.addClass('dropdown-menu-right');
+              }
+            }
+          }
+          else {
+            // Get the tooltip's top and left coordinates to center it with this directive.
+            var tipPosition = getCalculatedOffset(placement, elementPosition, tipWidth, tipHeight);
+            applyPlacement(tipPosition, placement);
+          }
         };
 
         $tooltip.$onKeyUp = function (evt) {
