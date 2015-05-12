@@ -74,7 +74,7 @@ angular.module('mgcrea.ngStrap.dropdown', ['mgcrea.ngStrap.tooltip'])
             bodyEl.on('click', onBodyClick);
           }, 0, false);
           var target = getTarget();
-          target.hasClass('dropdown') && target.addClass('open');
+          (target.hasClass('dropdown') || target.hasClass('dropup')) && target.addClass('open');
         };
 
         var hide = $dropdown.hide;
@@ -86,7 +86,7 @@ angular.module('mgcrea.ngStrap.dropdown', ['mgcrea.ngStrap.tooltip'])
           dropdownElement && dropdownElement.off('mousedown', $dropdown.$onMouseDown);
           bodyEl.off('click', onBodyClick);
           var target = getTarget();
-          target.hasClass('dropdown') && target.removeClass('open');
+          (target.hasClass('dropdown') || target.hasClass('dropup')) && target.removeClass('open');
         };
 
         var destroy = $dropdown.destroy;

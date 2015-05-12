@@ -246,13 +246,13 @@ angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.helpers.dimensions'])
           $tooltip.$isShown = scope.$isShown = true;
           safeDigest(scope);
 
+          // Now, apply placement
+          $tooltip.$applyPlacement();
+
           if (options.inlineTemplate) {
             enterAnimateCallback();
           }
           else {
-            // Now, apply placement
-            $tooltip.$applyPlacement();
-
             // Once placed, animate it.
             // Support v1.2+ $animate
             // https://github.com/angular/angular.js/issues/11713
@@ -394,9 +394,11 @@ angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.helpers.dimensions'])
             placement = placement.replace(autoToken, '') || defaults.placement;
           }
 
-          // Need to add the position class before we get
-          // the offsets
-          tipElement.addClass(options.placement);
+          if (!options.inlineTemplate) {
+            // Need to add the position class before we get
+            // the offsets
+            tipElement.addClass(options.placement);
+          }
 
           // Get the position of the target element
           // and the height and width of the tooltip so we can center it.
@@ -430,12 +432,33 @@ angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.helpers.dimensions'])
               placement = originalPlacement === 'left' ? 'right' : placement.replace('right', 'left');
             }
 
-            tipElement.removeClass(originalPlacement).addClass(placement);
+            if (!options.inlineTemplate) {
+              tipElement.removeClass(originalPlacement).addClass(placement);
+            }
           }
 
-          // Get the tooltip's top and left coordinates to center it with this directive.
-          var tipPosition = getCalculatedOffset(placement, elementPosition, tipWidth, tipHeight);
-          applyPlacement(tipPosition, placement);
+          if (options.target && (options.target.hasClass('dropdown') || options.target.hasClass('dropup'))) {
+            if (placement.indexOf('top') >= 0) {
+              options.target.removeClass('dropdown').addClass('dropup');
+            }
+            else {
+              options.target.removeClass('dropup').addClass('dropdown');
+            }
+
+            if (tipElement.hasClass('dropdown-menu')) {
+              if (placement.indexOf('left') >= 0) {
+                tipElement.removeClass('dropdown-menu-right');
+              }
+              else {
+                tipElement.addClass('dropdown-menu-right');
+              }
+            }
+          }
+          else {
+            // Get the tooltip's top and left coordinates to center it with this directive.
+            var tipPosition = getCalculatedOffset(placement, elementPosition, tipWidth, tipHeight);
+            applyPlacement(tipPosition, placement);
+          }
         };
 
         $tooltip.$onKeyUp = function(evt) {
