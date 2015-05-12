@@ -161,6 +161,9 @@ angular.module('mgcrea.ngStrap.modal', ['mgcrea.ngStrap.helpers.dimensions'])
             }
             modalElement.addClass(options.animation);
           }
+          else {
+            backdropElement.addClass('in');
+          }
 
           if(options.backdrop) {
             $animate.enter(backdropElement, bodyElement, null);
