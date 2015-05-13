@@ -388,16 +388,47 @@ angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.core', 'mgcrea.ngStrap
             var originalPlacement = placement;
             var viewportPosition = getPosition($tooltip.$viewport);
 
-            if (/bottom/.test(originalPlacement) && elementPosition.bottom + tipHeight > viewportPosition.bottom) {
-              placement = originalPlacement.replace('bottom', 'top');
-            } else if (/top/.test(originalPlacement) && elementPosition.top - tipHeight < viewportPosition.top) {
-              placement = originalPlacement.replace('top', 'bottom');
+            // Determine if the vertical placement
+            var bottom = /bottom/.test(originalPlacement);
+            var top = /top/.test(originalPlacement);
+
+            if (bottom || top) {
+              var bottomOverlap = elementPosition.bottom - viewportPosition.bottom + tipHeight;
+              var topOverlap = viewportPosition.top - elementPosition.top + tipHeight;
+              if (bottom && bottomOverlap > 0 || top && topOverlap > 0) {
+                if (bottomOverlap < topOverlap) {
+                  if (top) {
+                    placement = originalPlacement.replace('top', 'bottom');
+                  }
+                }
+                else {
+                  if (bottom) {
+                    placement = originalPlacement.replace('bottom', 'top');
+                  }
+                }
+              }
             }
 
-            if (/left/.test(originalPlacement) && elementPosition.left - tipWidth < viewportPosition.left) {
-              placement = placement.replace('left', 'right');
-            } else if (/right/.test(originalPlacement) && elementPosition.right + tipWidth > viewportPosition.width) {
-              placement = placement.replace('right', 'left');
+            // Determine the horizontal placement
+            // The exotic placements of left and right are opposite of the standard placements.  Their arrows are put on the left/right
+            // and flow in the opposite direction of their placement.
+            var right = originalPlacement === 'right' || originalPlacement === 'bottom-left' || originalPlacement === 'top-left';
+            var left = originalPlacement === 'left' || originalPlacement === 'bottom-right' || originalPlacement === 'top-right';
+            if (right || left) {
+              var rightOverlap = elementPosition.right - viewportPosition.right + tipWidth;
+              var leftOverlap = viewportPosition.left - elementPosition.left + tipWidth;
+              if (right && rightOverlap > 0 || left && leftOverlap > 0) {
+                if (rightOverlap < leftOverlap) {
+                  if (left) {
+                    placement = originalPlacement === 'left' ? 'right' : placement.replace('right', 'left');
+                  }
+                }
+                else {
+                  if (right) {
+                    placement = originalPlacement === 'right' ? 'left' : placement.replace('left', 'right');
+                  }
+                }
+              }
             }
 
             tipElement.removeClass(originalPlacement).addClass(placement);
