@@ -66,6 +66,8 @@ angular.module('mgcrea.ngStrap.dropdown', ['mgcrea.ngStrap.tooltip'])
 
         var show = $dropdown.show;
         $dropdown.show = function() {
+          var target = getTarget();
+          (target.hasClass('dropdown') || target.hasClass('dropup')) && target.addClass('open');
           show();
           // use timeout to hookup the events to prevent
           // event bubbling from being processed imediately.
@@ -73,8 +75,6 @@ angular.module('mgcrea.ngStrap.dropdown', ['mgcrea.ngStrap.tooltip'])
             options.keyboard && $dropdown.$element && $dropdown.$element.on('keydown', $dropdown.$onKeyDown);
             bodyEl.on('click', onBodyClick);
           }, 0, false);
-          var target = getTarget();
-          (target.hasClass('dropdown') || target.hasClass('dropup')) && target.addClass('open');
         };
 
         var hide = $dropdown.hide;

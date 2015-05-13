@@ -413,27 +413,50 @@ angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.helpers.dimensions'])
             var containerPosition = getPosition(container);
 
             // Determine if the vertical placement
-            if (originalPlacement.indexOf('bottom') >= 0 && elementPosition.bottom + tipHeight > containerPosition.bottom) {
-              placement = originalPlacement.replace('bottom', 'top');
-            } else if (originalPlacement.indexOf('top') >= 0 && elementPosition.top - tipHeight < containerPosition.top) {
-              placement = originalPlacement.replace('top', 'bottom');
+            var bottom = originalPlacement.indexOf('bottom') >= 0;
+            var top = originalPlacement.indexOf('top') >= 0;
+
+            if (bottom || top) {
+              var bottomOverlap = elementPosition.bottom - containerPosition.bottom + tipHeight;
+              var topOverlap = containerPosition.top - elementPosition.top + tipHeight;
+              if (bottom && bottomOverlap > 0 || top && topOverlap > 0) {
+                if (bottomOverlap < topOverlap) {
+                  if (top) {
+                    placement = originalPlacement.replace('top', 'bottom');
+                  }
+                }
+                else {
+                  if (bottom) {
+                    placement = originalPlacement.replace('bottom', 'top');
+                  }
+                }
+              }
             }
 
             // Determine the horizontal placement
             // The exotic placements of left and right are opposite of the standard placements.  Their arrows are put on the left/right
             // and flow in the opposite direction of their placement.
-            if ((originalPlacement === 'right' || originalPlacement === 'bottom-left' || originalPlacement === 'top-left') &&
-                elementPosition.right + tipWidth > containerPosition.width) {
-
-              placement = originalPlacement === 'right' ? 'left' : placement.replace('left', 'right');
-            } else if ((originalPlacement === 'left' || originalPlacement === 'bottom-right' || originalPlacement === 'top-right') &&
-                elementPosition.left - tipWidth < containerPosition.left) {
-
-              placement = originalPlacement === 'left' ? 'right' : placement.replace('right', 'left');
+            var right = originalPlacement === 'right' || originalPlacement === 'bottom-left' || originalPlacement === 'top-left';
+            var left = originalPlacement === 'left' || originalPlacement === 'bottom-right' || originalPlacement === 'top-right';
+            if (right || left) {
+              var rightOverlap = elementPosition.right - containerPosition.right + tipWidth;
+              var leftOverlap = containerPosition.left - elementPosition.left + tipWidth;
+              if (right && rightOverlap > 0 || left && leftOverlap > 0) {
+                if (rightOverlap < leftOverlap) {
+                  if (left) {
+                    placement = originalPlacement === 'left' ? 'right' : placement.replace('right', 'left');
+                  }
+                }
+                else {
+                  if (right) {
+                    placement = originalPlacement === 'right' ? 'left' : placement.replace('left', 'right');
+                  }
+                }
+              }
             }
 
             if (!options.inlineTemplate) {
-              tipElement.removeClass(originalPlacement).addClass(placement);
+              tipElement.removeClass('top left bottom right').addClass(placement);
             }
           }
 
