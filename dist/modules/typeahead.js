@@ -1,6 +1,6 @@
 /**
  * angular-strap
- * @version v2.2.4 - 2015-05-28
+ * @version v2.2.4 - 2015-07-01
  * @link http://mgcrea.github.io/angular-strap
  * @author Olivier Louvignes <olivier@mg-crea.com> (https://github.com/mgcrea)
  * @license MIT License, http://www.opensource.org/licenses/MIT
@@ -114,12 +114,15 @@ angular.module('mgcrea.ngStrap.typeahead', [ 'mgcrea.ngStrap.tooltip', 'mgcrea.n
       };
       var hide = $typeahead.hide;
       $typeahead.hide = function() {
-        $typeahead.$element && $typeahead.$element.off('mousedown', $typeahead.$onMouseDown);
+        var typeaheadElement = $typeahead.$element;
+        if (!$typeahead.$isShown) return;
+        hide();
+        if (!$typeahead.$isShown) return;
+        typeaheadElement && typeaheadElement.off('mousedown', $typeahead.$onMouseDown);
         if (options.keyboard) {
           element && element.off('keydown', $typeahead.$onKeyDown);
         }
         if (!options.autoSelect) $typeahead.activate(-1);
-        hide();
       };
       return $typeahead;
     }

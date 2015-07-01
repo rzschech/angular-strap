@@ -1,6 +1,6 @@
 /**
  * angular-strap
- * @version v2.2.4 - 2015-05-28
+ * @version v2.2.4 - 2015-07-01
  * @link http://mgcrea.github.io/angular-strap
  * @author Olivier Louvignes <olivier@mg-crea.com> (https://github.com/mgcrea)
  * @license MIT License, http://www.opensource.org/licenses/MIT
@@ -27,8 +27,13 @@ angular.module('mgcrea.ngStrap.dropdown', [ 'mgcrea.ngStrap.tooltip' ]).provider
       var $dropdown = {};
       var options = angular.extend({}, defaults, config);
       var scope = $dropdown.$scope = options.scope && options.scope.$new() || $rootScope.$new();
+      if (options.inlineTemplate === true) {
+        options.inlineTemplate = '.dropdown-menu';
+      }
+      if (options.inlineTemplate && !options.target) {
+        options.target = element.parent();
+      }
       $dropdown = $tooltip(element, options);
-      var parentEl = element.parent();
       $dropdown.$onKeyDown = function(evt) {
         if (!/(38|40)/.test(evt.keyCode)) return;
         evt.preventDefault();
@@ -44,20 +49,24 @@ angular.module('mgcrea.ngStrap.dropdown', [ 'mgcrea.ngStrap.tooltip' ]).provider
       };
       var show = $dropdown.show;
       $dropdown.show = function() {
+        var target = getTarget();
+        (target.hasClass('dropdown') || target.hasClass('dropup')) && target.addClass('open');
         show();
         $timeout(function() {
           options.keyboard && $dropdown.$element && $dropdown.$element.on('keydown', $dropdown.$onKeyDown);
           bodyEl.on('click', onBodyClick);
         }, 0, false);
-        parentEl.hasClass('dropdown') && parentEl.addClass('open');
       };
       var hide = $dropdown.hide;
       $dropdown.hide = function() {
+        var dropdownElement = $dropdown.$element;
         if (!$dropdown.$isShown) return;
-        options.keyboard && $dropdown.$element && $dropdown.$element.off('keydown', $dropdown.$onKeyDown);
-        bodyEl.off('click', onBodyClick);
-        parentEl.hasClass('dropdown') && parentEl.removeClass('open');
         hide();
+        if ($dropdown.$isShown) return;
+        dropdownElement && dropdownElement.off('mousedown', $dropdown.$onMouseDown);
+        bodyEl.off('click', onBodyClick);
+        var target = getTarget();
+        (target.hasClass('dropdown') || target.hasClass('dropup')) && target.removeClass('open');
       };
       var destroy = $dropdown.destroy;
       $dropdown.destroy = function() {
@@ -67,6 +76,9 @@ angular.module('mgcrea.ngStrap.dropdown', [ 'mgcrea.ngStrap.tooltip' ]).provider
       function onBodyClick(evt) {
         if (evt.target === element[0]) return;
         return evt.target !== element[0] && $dropdown.hide();
+      }
+      function getTarget() {
+        return options.target || element.parent();
       }
       return $dropdown;
     }
@@ -80,16 +92,20 @@ angular.module('mgcrea.ngStrap.dropdown', [ 'mgcrea.ngStrap.tooltip' ]).provider
       var options = {
         scope: scope
       };
-      angular.forEach([ 'placement', 'container', 'delay', 'trigger', 'keyboard', 'html', 'animation', 'template', 'id' ], function(key) {
+      angular.forEach([ 'placement', 'container', 'delay', 'target', 'trigger', 'keyboard', 'html', 'animation', 'template', 'id', 'inlineTemplate' ], function(key) {
         if (angular.isDefined(attr[key])) options[key] = attr[key];
       });
       var falseValueRegExp = /^(false|0|)$/i;
       angular.forEach([ 'html', 'container' ], function(key) {
         if (angular.isDefined(attr[key]) && falseValueRegExp.test(attr[key])) options[key] = false;
       });
-      attr.bsDropdown && scope.$watch(attr.bsDropdown, function(newValue, oldValue) {
-        scope.content = newValue;
-      }, true);
+      if (attr.bsDropdown) {
+        scope.$watch(attr.bsDropdown, function(newValue, oldValue) {
+          scope.content = newValue;
+        }, true);
+      } else {
+        options.inlineTemplate = options.inlineTemplate || true;
+      }
       attr.bsShow && scope.$watch(attr.bsShow, function(newValue, oldValue) {
         if (!dropdown || !angular.isDefined(newValue)) return;
         if (angular.isString(newValue)) newValue = !!newValue.match(/true|,?(dropdown),?/i);
