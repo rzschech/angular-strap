@@ -536,11 +536,8 @@ angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.core', 'mgcrea.ngStrap
           // use timeout to hookup the events to prevent
           // event bubbling from being processed imediately.
           $timeout(function () {
-            // Stop propagation when clicking inside tooltip
-            tipElement.on('click', stopEventPropagation);
-
             // Hide when clicking outside tooltip
-            $body.on('click', $tooltip.hide);
+            $body.on('click', hideIfNotChildEvent);
 
             _autoCloseEventsBinded = true;
           }, 0, false);
@@ -548,14 +545,20 @@ angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.core', 'mgcrea.ngStrap
 
         function unbindAutoCloseEvents () {
           if (_autoCloseEventsBinded) {
-            tipElement.off('click', stopEventPropagation);
-            $body.off('click', $tooltip.hide);
+            $body.off('click', hideIfNotChildEvent);
             _autoCloseEventsBinded = false;
           }
         }
 
-        function stopEventPropagation (event) {
-          event.stopPropagation();
+        function hideIfNotChildEvent (event) {
+          var node = event.target;
+          while (node && node !== $body[0]) {
+            if (node === tipElement[0]) {
+              return;
+            }
+            node = node.parentNode;
+          }
+          $tooltip.hide();
         }
 
         // Private methods
