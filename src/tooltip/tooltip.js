@@ -552,13 +552,16 @@ angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.core', 'mgcrea.ngStrap
 
         function hideIfNotChildEvent (event) {
           var node = event.target;
-          while (node && node !== $body[0]) {
+          while (node) {
             if (node === tipElement[0]) {
+              return;
+            }
+            if (node === $body[0]) {
+              $tooltip.hide();
               return;
             }
             node = node.parentNode;
           }
-          $tooltip.hide();
         }
 
         // Private methods
