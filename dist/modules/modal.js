@@ -1,6 +1,6 @@
 /**
  * angular-strap
- * @version v2.3.10 - 2016-10-17
+ * @version v2.3.10 - 2016-11-17
  * @link http://mgcrea.github.io/angular-strap
  * @author Olivier Louvignes <olivier@mg-crea.com> (https://github.com/mgcrea)
  * @license MIT License, http://www.opensource.org/licenses/MIT
@@ -148,6 +148,8 @@ angular.module('mgcrea.ngStrap.modal', [ 'mgcrea.ngStrap.core', 'mgcrea.ngStrap.
             backdropElement.addClass(options.backdropAnimation);
           }
           modalElement.addClass(options.animation);
+        } else {
+          backdropElement.addClass('in');
         }
         if (options.backdrop) {
           $animate.enter(backdropElement, bodyElement, null);

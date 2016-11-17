@@ -1,6 +1,6 @@
 /**
  * angular-strap
- * @version v2.3.10 - 2016-10-17
+ * @version v2.3.10 - 2016-11-17
  * @link http://mgcrea.github.io/angular-strap
  * @author Olivier Louvignes <olivier@mg-crea.com> (https://github.com/mgcrea)
  * @license MIT License, http://www.opensource.org/licenses/MIT
@@ -42,7 +42,14 @@ angular.module('mgcrea.ngStrap.tooltip', [ 'mgcrea.ngStrap.core', 'mgcrea.ngStra
     function TooltipFactory(element, config) {
       var $tooltip = {};
       var options = $tooltip.$options = angular.extend({}, defaults, config);
-      var promise = $tooltip.$promise = $bsCompiler.compile(options);
+      if (options.inlineTemplate) {
+        var deferred = $q.defer();
+        deferred.resolve();
+        $tooltip.$promise = deferred.promise;
+      } else {
+        $tooltip.$promise = $bsCompiler.compile(options);
+      }
+      var promise = $tooltip.$promise;
       var scope = $tooltip.$scope = options.scope && options.scope.$new() || $rootScope.$new();
       var nodeName = element[0].nodeName.toLowerCase();
       if (options.delay && angular.isString(options.delay)) {
@@ -105,6 +112,9 @@ angular.module('mgcrea.ngStrap.tooltip', [ 'mgcrea.ngStrap.core', 'mgcrea.ngStra
         if (options.target) {
           options.target = angular.isElement(options.target) ? options.target : findElement(options.target);
         }
+        if (options.inlineTemplate) {
+          options.inlineTemplate = angular.isElement(options.inlineTemplate) ? options.inlineTemplate : findElement(options.inlineTemplate, options.target && options.target[0]);
+        }
         if (options.show) {
           scope.$$postDigest(function() {
             if (options.trigger === 'focus') {
@@ -138,48 +148,59 @@ angular.module('mgcrea.ngStrap.tooltip', [ 'mgcrea.ngStrap.core', 'mgcrea.ngStra
         }
         var parent;
         var after;
-        if (options.container) {
-          parent = tipContainer;
-          if (tipContainer[0].lastChild) {
-            after = angular.element(tipContainer[0].lastChild);
-          } else {
-            after = null;
-          }
+        if (options.inlineTemplate) {
+          tipElement = $tooltip.$element = options.inlineTemplate;
         } else {
-          parent = null;
-          after = element;
+          if (options.container) {
+            parent = tipContainer;
+            if (tipContainer[0].lastChild) {
+              after = angular.element(tipContainer[0].lastChild);
+            } else {
+              after = null;
+            }
+          } else {
+            parent = null;
+            after = element;
+          }
+          if (tipElement) destroyTipElement();
+          tipScope = $tooltip.$scope.$new();
+          tipElement = $tooltip.$element = compileData.link(tipScope, function(clonedElement, scope) {});
+          tipElement.css({
+            top: '-9999px',
+            left: '-9999px',
+            right: 'auto',
+            display: 'block',
+            visibility: 'hidden'
+          });
         }
-        if (tipElement) destroyTipElement();
-        tipScope = $tooltip.$scope.$new();
-        tipElement = $tooltip.$element = compileData.link(tipScope, function(clonedElement, scope) {});
-        tipElement.css({
-          top: '-9999px',
-          left: '-9999px',
-          right: 'auto',
-          display: 'block',
-          visibility: 'hidden'
-        });
         if (options.animation) tipElement.addClass(options.animation);
         if (options.type) tipElement.addClass(options.prefixClass + '-' + options.type);
         if (options.customClass) tipElement.addClass(options.customClass);
-        if (after) {
-          after.after(tipElement);
-        } else {
-          parent.prepend(tipElement);
+        if (!options.inlineTemplate) {
+          if (after) {
+            after.after(tipElement);
+          } else {
+            parent.prepend(tipElement);
+          }
         }
         $tooltip.$isShown = scope.$isShown = true;
         safeDigest(scope);
         $tooltip.$applyPlacement();
-        if (angular.version.minor <= 2) {
-          $animate.enter(tipElement, parent, after, enterAnimateCallback);
+        if (options.inlineTemplate) {
+          enterAnimateCallback();
         } else {
-          $animate.enter(tipElement, parent, after).then(enterAnimateCallback);
+          if (angular.version.minor <= 2) {
+            $animate.enter(tipElement, parent, after, enterAnimateCallback);
+          } else {
+            $animate.enter(tipElement, parent, after).then(enterAnimateCallback);
+          }
         }
         safeDigest(scope);
         $$rAF(function() {
           if (tipElement) tipElement.css({
             visibility: 'visible'
           });
+          $tooltip.$applyPlacement();
           if (options.keyboard) {
             if (options.trigger !== 'focus') {
               $tooltip.focus();
@@ -219,10 +240,14 @@ angular.module('mgcrea.ngStrap.tooltip', [ 'mgcrea.ngStrap.core', 'mgcrea.ngStra
         }
         _blur = blur;
         _tipToHide = tipElement;
-        if (angular.version.minor <= 2) {
-          $animate.leave(tipElement, leaveAnimateCallback);
+        if (options.inlineTemplate) {
+          leaveAnimateCallback();
         } else {
-          $animate.leave(tipElement).then(leaveAnimateCallback);
+          if (angular.version.minor <= 2) {
+            $animate.leave(tipElement, leaveAnimateCallback);
+          } else {
+            $animate.leave(tipElement).then(leaveAnimateCallback);
+          }
         }
         $tooltip.$isShown = scope.$isShown = false;
         safeDigest(scope);
@@ -241,6 +266,12 @@ angular.module('mgcrea.ngStrap.tooltip', [ 'mgcrea.ngStrap.core', 'mgcrea.ngStra
         if (tipElement === _tipToHide) {
           if (_blur && options.trigger === 'focus') {
             return element[0].blur();
+          }
+          if (options.inlineTemplate) {
+            tipElement.css({
+              display: '',
+              visibility: ''
+            });
           }
           destroyTipElement();
         }
@@ -280,20 +311,59 @@ angular.module('mgcrea.ngStrap.tooltip', [ 'mgcrea.ngStrap.core', 'mgcrea.ngStra
         if (autoPlace) {
           var originalPlacement = placement;
           var viewportPosition = getPosition($tooltip.$viewport);
-          if (/bottom/.test(originalPlacement) && elementPosition.bottom + tipHeight > viewportPosition.bottom) {
-            placement = originalPlacement.replace('bottom', 'top');
-          } else if (/top/.test(originalPlacement) && elementPosition.top - tipHeight < viewportPosition.top) {
-            placement = originalPlacement.replace('top', 'bottom');
+          var bottom = /bottom/.test(originalPlacement);
+          var top = /top/.test(originalPlacement);
+          if (bottom || top) {
+            var bottomOverlap = elementPosition.bottom - viewportPosition.bottom + tipHeight;
+            var topOverlap = viewportPosition.top - elementPosition.top + tipHeight;
+            if (bottom && bottomOverlap > 0 || top && topOverlap > 0) {
+              if (bottomOverlap < topOverlap) {
+                if (top) {
+                  placement = originalPlacement.replace('top', 'bottom');
+                }
+              } else {
+                if (bottom) {
+                  placement = originalPlacement.replace('bottom', 'top');
+                }
+              }
+            }
           }
-          if (/left/.test(originalPlacement) && elementPosition.left - tipWidth < viewportPosition.left) {
-            placement = placement.replace('left', 'right');
-          } else if (/right/.test(originalPlacement) && elementPosition.right + tipWidth > viewportPosition.width) {
-            placement = placement.replace('right', 'left');
+          var right = originalPlacement === 'right' || originalPlacement === 'bottom-left' || originalPlacement === 'top-left';
+          var left = originalPlacement === 'left' || originalPlacement === 'bottom-right' || originalPlacement === 'top-right';
+          if (right || left) {
+            var rightOverlap = elementPosition.right - viewportPosition.right + tipWidth;
+            var leftOverlap = viewportPosition.left - elementPosition.left + tipWidth;
+            if (right && rightOverlap > 0 || left && leftOverlap > 0) {
+              if (rightOverlap < leftOverlap) {
+                if (left) {
+                  placement = originalPlacement === 'left' ? 'right' : placement.replace('right', 'left');
+                }
+              } else {
+                if (right) {
+                  placement = originalPlacement === 'right' ? 'left' : placement.replace('left', 'right');
+                }
+              }
+            }
           }
           tipElement.removeClass(originalPlacement).addClass(placement);
         }
-        var tipPosition = getCalculatedOffset(placement, elementPosition, tipWidth, tipHeight);
-        applyPlacement(tipPosition, placement);
+        if (options.target && (options.target.hasClass('dropdown') || options.target.hasClass('dropup'))) {
+          if (placement.indexOf('top') >= 0) {
+            options.target.removeClass('dropdown').addClass('dropup');
+          } else {
+            options.target.removeClass('dropup').addClass('dropdown');
+          }
+          if (tipElement.hasClass('dropdown-menu')) {
+            if (placement.indexOf('left') >= 0) {
+              tipElement.removeClass('dropdown-menu-right');
+            } else {
+              tipElement.addClass('dropdown-menu-right');
+            }
+          }
+        } else {
+          var tipPosition = getCalculatedOffset(placement, elementPosition, tipWidth, tipHeight);
+          applyPlacement(tipPosition, placement);
+        }
       };
       $tooltip.$onKeyUp = function(evt) {
         if (evt.which === 27 && $tooltip.$isShown) {
@@ -366,20 +436,28 @@ angular.module('mgcrea.ngStrap.tooltip', [ 'mgcrea.ngStrap.core', 'mgcrea.ngStra
       var _autoCloseEventsBinded = false;
       function bindAutoCloseEvents() {
         $timeout(function() {
-          tipElement.on('click', stopEventPropagation);
-          $body.on('click', $tooltip.hide);
+          $body.on('click', hideIfNotChildEvent);
           _autoCloseEventsBinded = true;
         }, 0, false);
       }
       function unbindAutoCloseEvents() {
         if (_autoCloseEventsBinded) {
-          tipElement.off('click', stopEventPropagation);
-          $body.off('click', $tooltip.hide);
+          $body.off('click', hideIfNotChildEvent);
           _autoCloseEventsBinded = false;
         }
       }
-      function stopEventPropagation(event) {
-        event.stopPropagation();
+      function hideIfNotChildEvent(event) {
+        var node = event.target;
+        while (node) {
+          if (node === tipElement[0]) {
+            return;
+          }
+          if (node === $body[0]) {
+            $tooltip.hide();
+            return;
+          }
+          node = node.parentNode;
+        }
       }
       function getPosition($element) {
         $element = $element || (options.target || element);
@@ -558,7 +636,9 @@ angular.module('mgcrea.ngStrap.tooltip', [ 'mgcrea.ngStrap.core', 'mgcrea.ngStra
           tipScope = null;
         }
         if (tipElement) {
-          tipElement.remove();
+          if (!options.inlineTemplate) {
+            tipElement.remove();
+          }
           tipElement = $tooltip.$element = null;
         }
       }

@@ -1,6 +1,6 @@
 /**
  * angular-strap
- * @version v2.3.10 - 2016-10-17
+ * @version v2.3.10 - 2016-11-17
  * @link http://mgcrea.github.io/angular-strap
  * @author Olivier Louvignes <olivier@mg-crea.com> (https://github.com/mgcrea)
  * @license MIT License, http://www.opensource.org/licenses/MIT
@@ -27,8 +27,13 @@ angular.module('mgcrea.ngStrap.dropdown', [ 'mgcrea.ngStrap.tooltip' ]).provider
       var $dropdown = {};
       var options = angular.extend({}, defaults, config);
       $dropdown.$scope = options.scope && options.scope.$new() || $rootScope.$new();
+      if (options.inlineTemplate === true) {
+        options.inlineTemplate = '.dropdown-menu';
+      }
+      if (options.inlineTemplate && !options.target) {
+        options.target = element.parent();
+      }
       $dropdown = $tooltip(element, options);
-      var parentEl = element.parent();
       $dropdown.$onKeyDown = function(evt) {
         if (!/(38|40)/.test(evt.keyCode)) return;
         evt.preventDefault();
@@ -44,20 +49,24 @@ angular.module('mgcrea.ngStrap.dropdown', [ 'mgcrea.ngStrap.tooltip' ]).provider
       };
       var show = $dropdown.show;
       $dropdown.show = function() {
+        var target = getTarget();
+        if (target.hasClass('dropdown') || target.hasClass('dropup')) target.addClass('open');
         show();
         $timeout(function() {
           if (options.keyboard && $dropdown.$element) $dropdown.$element.on('keydown', $dropdown.$onKeyDown);
           bodyEl.on('click', onBodyClick);
         }, 0, false);
-        if (parentEl.hasClass('dropdown')) parentEl.addClass('open');
       };
       var hide = $dropdown.hide;
       $dropdown.hide = function() {
+        var dropdownElement = $dropdown.$element;
         if (!$dropdown.$isShown) return;
-        if (options.keyboard && $dropdown.$element) $dropdown.$element.off('keydown', $dropdown.$onKeyDown);
-        bodyEl.off('click', onBodyClick);
-        if (parentEl.hasClass('dropdown')) parentEl.removeClass('open');
         hide();
+        if ($dropdown.$isShown) return;
+        if (options.keyboard && dropdownElement) dropdownElement.off('keydown', $dropdown.$onKeyDown);
+        bodyEl.off('click', onBodyClick);
+        var target = getTarget();
+        if (target.hasClass('dropdown') || target.hasClass('dropup')) target.removeClass('open');
       };
       var destroy = $dropdown.destroy;
       $dropdown.destroy = function() {
@@ -68,6 +77,9 @@ angular.module('mgcrea.ngStrap.dropdown', [ 'mgcrea.ngStrap.tooltip' ]).provider
         if (evt.target === element[0]) return;
         return evt.target !== element[0] && $dropdown.hide();
       }
+      function getTarget() {
+        return options.target || element.parent();
+      }
       return $dropdown;
     }
     return DropdownFactory;
@@ -77,22 +89,21 @@ angular.module('mgcrea.ngStrap.dropdown', [ 'mgcrea.ngStrap.tooltip' ]).provider
     restrict: 'EAC',
     scope: true,
     compile: function(tElement, tAttrs) {
+      var options = {};
       if (!tAttrs.bsDropdown) {
         var nextSibling = tElement[0].nextSibling;
         while (nextSibling && nextSibling.nodeType !== 1) {
           nextSibling = nextSibling.nextSibling;
         }
         if (nextSibling && nextSibling.className.split(' ').indexOf('dropdown-menu') >= 0) {
-          tAttrs.template = nextSibling.outerHTML;
-          tAttrs.templateUrl = undefined;
+          options.template = nextSibling.outerHTML;
+          options.templateUrl = undefined;
           nextSibling.parentNode.removeChild(nextSibling);
         }
       }
       return function postLink(scope, element, attr) {
-        var options = {
-          scope: scope
-        };
-        angular.forEach([ 'template', 'templateUrl', 'controller', 'controllerAs', 'placement', 'container', 'delay', 'trigger', 'keyboard', 'html', 'animation', 'id', 'autoClose' ], function(key) {
+        options.scope = scope;
+        angular.forEach([ 'template', 'templateUrl', 'controller', 'controllerAs', 'placement', 'container', 'delay', 'target', 'trigger', 'keyboard', 'html', 'animation', 'id', 'autoClose', 'inlineTemplate' ], function(key) {
           if (angular.isDefined(tAttrs[key])) options[key] = tAttrs[key];
         });
         var falseValueRegExp = /^(false|0|)$/i;
@@ -105,11 +116,9 @@ angular.module('mgcrea.ngStrap.dropdown', [ 'mgcrea.ngStrap.tooltip' ]).provider
             options[key] = scope.$eval(attr[bsKey]);
           }
         });
-        if (attr.bsDropdown) {
-          scope.$watch(attr.bsDropdown, function(newValue, oldValue) {
-            scope.content = newValue;
-          }, true);
-        }
+        scope.$watch(attr.bsDropdown, function(newValue, oldValue) {
+          scope.content = newValue;
+        }, true);
         var dropdown = $dropdown(element, options);
         if (attr.bsShow) {
           scope.$watch(attr.bsShow, function(newValue, oldValue) {

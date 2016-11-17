@@ -1,6 +1,6 @@
 /**
  * angular-strap
- * @version v2.3.10 - 2016-10-17
+ * @version v2.3.10 - 2016-11-17
  * @link http://mgcrea.github.io/angular-strap
  * @author Olivier Louvignes <olivier@mg-crea.com> (https://github.com/mgcrea)
  * @license MIT License, http://www.opensource.org/licenses/MIT
@@ -228,14 +228,17 @@ angular.module('mgcrea.ngStrap.select', [ 'mgcrea.ngStrap.tooltip', 'mgcrea.ngSt
       };
       var _hide = $select.hide;
       $select.hide = function() {
+        var selectElement = $select.$element;
+        if (!$select.$isShown) return;
+        hide();
+        if ($select.$isShown) return;
         if (!options.multiple && angular.isUndefined(controller.$modelValue)) {
           scope.$activeIndex = -1;
         }
-        $select.$element.off(isTouch ? 'touchstart' : 'mousedown', $select.$onMouseDown);
+        selectElement.off(isTouch ? 'touchstart' : 'mousedown', $select.$onMouseDown);
         if (options.keyboard) {
           element.off('keydown', $select.$onKeyDown);
         }
-        _hide(true);
       };
       return $select;
     }
