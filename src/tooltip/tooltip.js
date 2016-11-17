@@ -266,6 +266,7 @@ angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.core', 'mgcrea.ngStrap
           $$rAF(function () {
             // Once the tooltip is placed and the animation starts, make the tooltip visible
             if (tipElement) tipElement.css({visibility: 'visible'});
+            $tooltip.$applyPlacement();
 
             // Bind events
             if (options.keyboard) {
