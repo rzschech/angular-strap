@@ -275,7 +275,7 @@ angular.module('mgcrea.ngStrap.select', ['mgcrea.ngStrap.tooltip', 'mgcrea.ngStr
         $select.hide = function () {
           var selectElement = $select.$element;
           if(!$select.$isShown) return;
-          hide();
+          _hide();
           if($select.$isShown) return; // support preventing hide
           if (!options.multiple && angular.isUndefined(controller.$modelValue)) {
             scope.$activeIndex = -1;
